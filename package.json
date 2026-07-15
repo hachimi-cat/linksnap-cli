@@ -1,0 +1,47 @@
+{
+  "name": "@forjio/linksnap-cli",
+  "version": "1.2.1",
+  "description": "CLI for the LinkSnap URL shortener API",
+  "type": "module",
+  "bin": {
+    "linksnap": "./bin/linksnap.js"
+  },
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run src/__tests__/unit/",
+    "test:e2e": "BACKEND_URL=https://staging-linksnap.forjio.com/api/v1 vitest run src/__tests__/e2e/",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@forjio/linksnap-node": "^0.1.0",
+    "@forjio/sdk": "^0.5.0",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "open": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hachimi-cat/linksnap-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hachimi-cat/linksnap-cli/issues"
+  },
+  "homepage": "https://github.com/hachimi-cat/linksnap-cli#readme"
+}
