@@ -20,7 +20,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@forjio/linksnap-node": "^0.1.0",
+    "@forjio/linksnap-node": "^0.1.2",
     "@forjio/sdk": "^0.5.0",
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
