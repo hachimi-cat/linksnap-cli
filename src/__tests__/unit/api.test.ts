@@ -5,6 +5,9 @@ import { apiRequest, ApiRequestError } from '../../lib/api.js';
 vi.mock('../../lib/config.js', () => ({
   resolveApiKey: (opts: { apiKey?: string }) => opts.apiKey ?? 'test-key-123',
   resolveApiUrl: (opts: { apiUrl?: string }) => opts.apiUrl ?? 'https://api.test.com/v1',
+  resolveProfile: (opts: { profile?: string }) => opts.profile ?? 'default',
+  // No `linksnap auth login` session here: lib/credentials.ts falls through to the key.
+  getCredentialsPath: () => '/nonexistent/.linksnap/credentials',
 }));
 
 describe('ApiRequestError', () => {

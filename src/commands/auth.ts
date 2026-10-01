@@ -14,8 +14,11 @@ import {
   resolveHuudisIssuer,
   resolveHuudisClientId,
   resolveProfile,
+  resolveApiUrl,
 } from '../lib/config.js';
-import { newSession, getClient, toApiRequestError } from '../lib/client.js';
+import { LinkSnapClient } from '@forjio/linksnap-node';
+import { newSession, getClient, sdkBaseUrl, toApiRequestError } from '../lib/client.js';
+import { loadSession } from '../lib/credentials.js';
 import { ApiRequestError } from '../lib/api.js';
 import { formatKeyValue, errorOutput } from '../lib/output.js';
 
@@ -144,14 +147,15 @@ authCommand
     const profile = opts.profile ?? globalOpts.profile ?? 'ci';
 
     try {
-      // Verify the key by hitting the workspace endpoint via the SDK.
+      // Verify the key on its workspace (GET /workspaces/current). Not /auth/me: that
+      // is who a signed-in person is, and a key has no person.
       const handle = await getClient({
         apiKey,
         apiUrl: globalOpts.apiUrl,
         verbose: globalOpts.verbose,
       });
-      const data = (await handle.client.account.me()) as {
-        email?: string;
+      const data = (await handle.client.workspace.show()) as {
+        name?: string;
         plan?: string;
       };
 
@@ -170,7 +174,7 @@ authCommand
         );
       } else if (!globalOpts.quiet) {
         console.log(
-          `Saved. Authenticated as ${data.email ?? 'user'} (${data.plan ?? 'unknown'} plan), profile "${profile}".`,
+          `Saved. API key for workspace "${data.name ?? 'unknown'}" (${data.plan ?? 'unknown'} plan), profile "${profile}".`,
         );
       }
       process.exit(0);
@@ -197,56 +201,53 @@ async function statusAction(_opts: unknown, cmd: Command): Promise<void> {
   const globalOpts = getGlobalOpts(cmd);
   const profile = resolveProfile(globalOpts);
 
-  // Try session first.
-  if (existsSync(getCredentialsPath())) {
+  // The `auth login` session first — refreshed when it is about to expire, as every
+  // command does — and who it is, from the server.
+  const session = existsSync(getCredentialsPath()) ? await loadSession(profile) : null;
+  if (session) {
+    const data = session.data!;
+    let email: string | undefined;
+    let workspaceId: string | undefined;
     try {
-      const session = newSession(profile);
-      const data = await session.load();
-      let email: string | undefined;
-      try {
-        const handle = await getClient({
-          apiUrl: globalOpts.apiUrl,
-          profile,
-          verbose: globalOpts.verbose,
-        });
-        const me = (await handle.client.account.me()) as { email?: string };
-        email = me.email;
-      } catch {
-        // Best-effort — show what we know locally.
-      }
-
-      if (globalOpts.json) {
-        console.log(
-          JSON.stringify(
-            {
-              authenticated: true,
-              authMode: 'session',
-              profile,
-              issuer: data.issuer,
-              email,
-              expiresAt: data.expiresAt,
-              credentials: getCredentialsPath(),
-            },
-            null,
-            2,
-          ),
-        );
-      } else if (!globalOpts.quiet) {
-        console.log(
-          formatKeyValue([
-            ['Mode', 'Huudis session'],
-            ['Profile', profile],
-            ['Email', email ?? '(unknown)'],
-            ['Issuer', data.issuer],
-            ['Expires', new Date(data.expiresAt * 1000).toISOString()],
-            ['Credentials', getCredentialsPath()],
-          ]),
-        );
-      }
-      process.exit(0);
+      const client = new LinkSnapClient({ baseUrl: sdkBaseUrl(resolveApiUrl(globalOpts)), session });
+      const me = (await client.account.me()) as { user?: { email?: string; id?: string } };
+      email = me.user?.email;
+      workspaceId = me.user?.id;
     } catch {
-      // No session for this profile — fall through to API-key path.
+      // Best-effort — show what we know locally.
     }
+
+    if (globalOpts.json) {
+      console.log(
+        JSON.stringify(
+          {
+            authenticated: true,
+            authMode: 'session',
+            profile,
+            issuer: data.issuer,
+            email,
+            workspaceId,
+            expiresAt: data.expiresAt,
+            credentials: getCredentialsPath(),
+          },
+          null,
+          2,
+        ),
+      );
+    } else if (!globalOpts.quiet) {
+      console.log(
+        formatKeyValue([
+          ['Mode', 'Huudis session'],
+          ['Profile', profile],
+          ['Email', email ?? '(unknown)'],
+          ['Workspace', workspaceId ?? '(unknown)'],
+          ['Issuer', data.issuer],
+          ['Expires', new Date(data.expiresAt * 1000).toISOString()],
+          ['Credentials', getCredentialsPath()],
+        ]),
+      );
+    }
+    process.exit(0);
   }
 
   // API key fallback.

@@ -293,20 +293,22 @@ describe('auth commands', () => {
   });
 
   describe('auth token', () => {
-    it('verifies the key by calling /api/v1/auth/me, sending it the way the server reads keys', async () => {
-      mockApiSuccess({ email: 'user@test.com', plan: 'Pro' });
+    // On its workspace: /auth/me is who a signed-in person is, and refuses a key (401).
+    it('verifies the key on its workspace (/api/v1/workspaces/current), sending it the way the server reads keys', async () => {
+      mockApiSuccess({ id: 'ws_1', name: 'Acme', plan: 'pro' });
       await run('auth', 'token', 'lsk_live_abc123');
-      expect(getCallUrl()).toContain('/api/v1/auth/me');
+      expect(getCallUrl()).toContain('/api/v1/workspaces/current');
       expect(getCallMethod()).toBe('GET');
       expect(getCallAuth()).toBe('ApiKey lsk_live_abc123');
+      expect(logOutput.join('\n')).toContain('workspace "Acme" (pro plan)');
     });
 
     it('outputs JSON with --json', async () => {
-      mockApiSuccess({ email: 'user@test.com', plan: 'Pro' });
+      mockApiSuccess({ id: 'ws_1', name: 'Acme', plan: 'pro' });
       await run('--json', 'auth', 'token', 'lsk_live_abc123');
       const parsed = JSON.parse(logOutput.join('\n'));
       expect(parsed.status).toBe('authenticated');
-      expect(parsed.email).toBe('user@test.com');
+      expect(parsed.name).toBe('Acme');
       expect(parsed.profile).toBeDefined();
     });
 

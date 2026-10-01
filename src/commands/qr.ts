@@ -2,19 +2,19 @@ import { Command } from 'commander';
 import { createInterface } from 'node:readline';
 import { readFileSync } from 'node:fs';
 import { basename, extname } from 'node:path';
-import { apiRequest, apiDownload, ApiRequestError, authorizationHeader } from '../lib/api.js';
-import { resolveApiKey, resolveApiUrl } from '../lib/config.js';
+import { apiRequest, apiDownload, ApiRequestError, resolveAuthorization } from '../lib/api.js';
+import { resolveApiUrl } from '../lib/config.js';
 import { formatTable, formatKeyValue, formatJson, errorOutput } from '../lib/output.js';
 
 function getGlobalOpts(cmd: Command) {
   return cmd.optsWithGlobals() as {
     json?: boolean; quiet?: boolean; verbose?: boolean;
-    apiKey?: string; apiUrl?: string;
+    apiKey?: string; apiUrl?: string; profile?: string;
   };
 }
 
 function apiOpts(globalOpts: ReturnType<typeof getGlobalOpts>) {
-  return { apiKey: globalOpts.apiKey, apiUrl: globalOpts.apiUrl, verbose: globalOpts.verbose };
+  return { apiKey: globalOpts.apiKey, apiUrl: globalOpts.apiUrl, profile: globalOpts.profile, verbose: globalOpts.verbose };
 }
 
 async function confirm(message: string): Promise<boolean> {
@@ -326,16 +326,10 @@ qrCommand
       const mime = detectMime(file);
       const filename = basename(file);
 
-      // Resolve API URL + key directly — multipart bypasses the JSON-only
+      // Resolve API URL + credential directly — multipart bypasses the JSON-only
       // SDK ApiClient and the hand-rolled apiRequest helper.
       const baseUrl = resolveApiUrl({ apiUrl: globalOpts.apiUrl });
-      const apiKey = resolveApiKey({ apiKey: globalOpts.apiKey });
-      if (!apiKey) {
-        throw new ApiRequestError(401, {
-          code: 'AUTH_REQUIRED',
-          message: 'Not authenticated. Run `linksnap auth login` or `linksnap auth token <key>` first.',
-        });
-      }
+      const authorization = await resolveAuthorization(apiOpts(globalOpts));
       const uploadUrl = new URL('qr-codes/upload-logo', baseUrl.endsWith('/') ? baseUrl : baseUrl + '/').toString();
 
       // Native FormData + Blob. The backend's multer config expects the field
@@ -347,7 +341,7 @@ qrCommand
       const start = Date.now();
       const uploadResp = await fetch(uploadUrl, {
         method: 'POST',
-        headers: { Authorization: authorizationHeader(apiKey), Accept: 'application/json' },
+        headers: { Authorization: authorization, Accept: 'application/json' },
         body: form,
       });
       if (globalOpts.verbose) {

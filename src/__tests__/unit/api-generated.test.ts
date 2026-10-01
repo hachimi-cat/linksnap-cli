@@ -8,6 +8,9 @@ globalThis.fetch = mockFetch;
 vi.mock('../../lib/config.js', () => ({
   resolveApiKey: (opts: { apiKey?: string }) => opts.apiKey ?? 'lsk_live_test',
   resolveApiUrl: (opts: { apiUrl?: string }) => opts.apiUrl ?? 'https://linksnap.test/api/v1',
+  resolveProfile: (opts: { profile?: string }) => opts.profile ?? 'default',
+  // No `linksnap auth login` session here (session-credentials.test.ts has one).
+  getCredentialsPath: () => '/nonexistent/.linksnap/credentials',
 }));
 
 import { buildApiCommand, API_ROUTES } from '../../commands/api.generated.js';

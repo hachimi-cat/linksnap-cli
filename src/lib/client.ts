@@ -1,12 +1,9 @@
-import { existsSync } from 'node:fs';
 import { LinkSnapClient, Session } from '@forjio/linksnap-node';
-import {
-  resolveApiKey,
-  resolveApiUrl,
-  resolveProfile,
-  getCredentialsPath,
-} from './config.js';
+import { resolveApiUrl } from './config.js';
 import { ApiRequestError } from './api.js';
+import { newSession, resolveCredential } from './credentials.js';
+
+export { newSession };
 
 /**
  * The legacy CLI stores `apiUrl` like `https://linksnap.forjio.com/api/v1`,
@@ -34,52 +31,25 @@ export interface ClientHandle {
 }
 
 /**
- * Build a LinkSnapClient. Prefer a Huudis session when one exists in
- * ~/.linksnap/credentials for the active profile; fall back to API key.
+ * Build a LinkSnapClient with this run's credential (lib/credentials.ts): an API key
+ * given for the run, else the profile's Huudis session (refreshed when stale — the SDK
+ * client also refreshes on a 401), else the saved API key.
  *
- * Throws ApiRequestError with AUTH_REQUIRED if neither auth is available.
+ * Throws ApiRequestError with AUTH_REQUIRED if there is none.
  */
 export async function getClient(opts: ClientOptions = {}): Promise<ClientHandle> {
   const baseUrl = sdkBaseUrl(resolveApiUrl(opts));
-  const profile = resolveProfile(opts);
-  const credentialsPath = getCredentialsPath();
-
-  // Prefer Session if a credentials file exists and the profile is present.
-  if (existsSync(credentialsPath)) {
-    const session = newSession(profile);
-    try {
-      await session.load();
-      // Single-flight refresh if expiring soon (or expired).
-      if (session.willExpireSoon()) {
-        await session.refresh();
-      }
-      const client = new LinkSnapClient({ baseUrl, session });
-      return { client, authMode: 'session', session };
-    } catch {
-      // Profile didn't exist in credentials file, or refresh failed.
-      // Fall through to API key path.
-    }
+  const cred = await resolveCredential(opts);
+  if (cred?.kind === 'session') {
+    return { client: new LinkSnapClient({ baseUrl, session: cred.session }), authMode: 'session', session: cred.session };
   }
-
-  const apiKey = resolveApiKey(opts);
-  if (apiKey) {
-    const client = new LinkSnapClient({ baseUrl, apiKey });
-    return { client, authMode: 'apiKey' };
+  if (cred?.kind === 'apiKey') {
+    return { client: new LinkSnapClient({ baseUrl, apiKey: cred.key }), authMode: 'apiKey' };
   }
-
   throw new ApiRequestError(401, {
     code: 'AUTH_REQUIRED',
     message:
       'Not authenticated. Run `linksnap auth login` (Huudis device flow) or `linksnap auth token <key>` (API key) first.',
-  });
-}
-
-/** Construct a Session bound to ~/.linksnap/credentials. */
-export function newSession(profile: string = 'default'): Session {
-  return new Session({
-    brand: 'linksnap',
-    profile,
-    credentialsPath: getCredentialsPath(),
   });
 }
 

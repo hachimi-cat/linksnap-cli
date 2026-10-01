@@ -12,7 +12,7 @@ function getGlobalOpts(cmd: Command) {
 }
 
 function apiOpts(globalOpts: ReturnType<typeof getGlobalOpts>) {
-  return { apiKey: globalOpts.apiKey, apiUrl: globalOpts.apiUrl, verbose: globalOpts.verbose };
+  return { apiKey: globalOpts.apiKey, apiUrl: globalOpts.apiUrl, profile: globalOpts.profile, verbose: globalOpts.verbose };
 }
 
 function clientOpts(globalOpts: ReturnType<typeof getGlobalOpts>) {

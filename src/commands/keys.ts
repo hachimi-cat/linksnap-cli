@@ -6,12 +6,12 @@ import { formatJson, formatTable, errorOutput } from '../lib/output.js';
 function getGlobalOpts(cmd: Command) {
   return cmd.optsWithGlobals() as {
     json?: boolean; quiet?: boolean; verbose?: boolean;
-    apiKey?: string; apiUrl?: string;
+    apiKey?: string; apiUrl?: string; profile?: string;
   };
 }
 
 function apiOpts(globalOpts: ReturnType<typeof getGlobalOpts>) {
-  return { apiKey: globalOpts.apiKey, apiUrl: globalOpts.apiUrl, verbose: globalOpts.verbose };
+  return { apiKey: globalOpts.apiKey, apiUrl: globalOpts.apiUrl, profile: globalOpts.profile, verbose: globalOpts.verbose };
 }
 
 async function confirm(message: string): Promise<boolean> {

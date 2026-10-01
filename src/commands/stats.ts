@@ -5,12 +5,12 @@ import { formatJson, formatKeyValue, formatTable, errorOutput } from '../lib/out
 function getGlobalOpts(cmd: Command) {
   return cmd.optsWithGlobals() as {
     json?: boolean; quiet?: boolean; verbose?: boolean;
-    apiKey?: string; apiUrl?: string;
+    apiKey?: string; apiUrl?: string; profile?: string;
   };
 }
 
 function apiOpts(globalOpts: ReturnType<typeof getGlobalOpts>) {
-  return { apiKey: globalOpts.apiKey, apiUrl: globalOpts.apiUrl, verbose: globalOpts.verbose };
+  return { apiKey: globalOpts.apiKey, apiUrl: globalOpts.apiUrl, profile: globalOpts.profile, verbose: globalOpts.verbose };
 }
 
 function renderBar(count: number, max: number, width = 20): string {

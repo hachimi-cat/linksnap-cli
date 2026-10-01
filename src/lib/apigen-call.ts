@@ -1,8 +1,9 @@
 /**
  * How the generated `linksnap api <area> <action>` commands (commands/api.generated.ts)
- * make their call: this CLI's own HTTP helper and credentials (lib/api.ts — the API key
- * from --api-key, $LINKSNAP_API_KEY or ~/.linksnap/config.json, against --api-url), its
- * own output and errors, exactly like `linksnap links …`.
+ * make their call: this CLI's own HTTP helper and credentials (lib/api.ts, with the
+ * credential order of lib/credentials.ts — --api-key or $LINKSNAP_API_KEY, else the
+ * `linksnap auth login` session of --profile, else the key saved by `linksnap auth
+ * token`), against --api-url, with its own output and errors, exactly like `linksnap links …`.
  */
 import type { Command } from 'commander';
 import { apiRequest, ApiRequestError } from './api.js';
@@ -14,6 +15,7 @@ interface GlobalOpts {
   verbose?: boolean;
   apiKey?: string;
   apiUrl?: string;
+  profile?: string;
 }
 
 const globals = (cmd: Command): GlobalOpts => cmd.optsWithGlobals() as GlobalOpts;
@@ -35,6 +37,7 @@ export async function callRoute(
     response = await apiRequest(method, path.replace(/^\/api\/v1\//, ''), {
       apiKey: g.apiKey,
       apiUrl: g.apiUrl,
+      profile: g.profile,
       verbose: g.verbose,
       body,
       params,
