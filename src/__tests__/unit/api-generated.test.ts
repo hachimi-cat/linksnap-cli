@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Command } from 'commander';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 // `linksnap api <area> <action>`: every feature route, generated from the API spec.
 const mockFetch = vi.fn();
@@ -117,6 +120,35 @@ describe('linksnap api', () => {
     await run(['api', 'tags', 'list']);
     expect(exitCode).toBe(2);
     expect(errOutput.join('\n')).toContain('UNAUTHORIZED');
+  });
+
+  it('uploads a file route as multipart/form-data, the file typed by its name', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'linksnap-upload-'));
+    const file = join(dir, 'logo.png');
+    writeFileSync(file, Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+    reply({ logoData: 'data:image/png;base64,iVBORw==' });
+    await run(['api', 'qr-codes', 'upload-logo', '--logo', file]);
+    expect(exitCode).toBe(0);
+    const [url, init] = mockFetch.mock.calls[0] as [string, { method: string; headers: Record<string, string>; body: FormData }];
+    expect(url).toBe('https://linksnap.test/api/v1/qr-codes/upload-logo');
+    expect(init.method).toBe('POST');
+    expect(init.headers.Authorization).toBe('ApiKey lsk_live_test');
+    // No JSON Content-Type: fetch writes the multipart one, with its boundary.
+    expect(Object.keys(init.headers).map((h) => h.toLowerCase())).not.toContain('content-type');
+    expect(init.body).toBeInstanceOf(FormData);
+    const logo = init.body.get('logo') as File;
+    expect(logo.name).toBe('logo.png');
+    // The server takes a logo by its type (PNG, JPEG or SVG).
+    expect(logo.type).toBe('image/png');
+    expect(new Uint8Array(await logo.arrayBuffer())).toEqual(new Uint8Array([0x89, 0x50, 0x4e, 0x47]));
+    expect(JSON.parse(logOutput.join('\n'))).toEqual({ logoData: 'data:image/png;base64,iVBORw==' });
+  });
+
+  it('refuses a file route without its file before calling', async () => {
+    await run(['api', 'qr-codes', 'upload-logo']);
+    expect(exitCode).toBe(1);
+    expect(errOutput.join('\n')).toContain('--logo');
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it('refuses a body that is not valid JSON before calling', async () => {

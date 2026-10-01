@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.4.0
+- `linksnap api qr-codes upload-logo --logo <path>`: the generated command uploads the file as `multipart/form-data` (it had no `--logo` and sent nothing), typed from its name the way `linksnap qr upload-logo` does, with this run's credential.
+
 ## 1.3.1
 - Every command now signs in with `linksnap auth login`'s session: the generated `linksnap api …` commands and the hand-written ones (links, qr, tags, domains, stats, keys, billing, workspace) send its access token, refresh it when it is about to expire, and on a refused token refresh once and retry. Order: an API key given for the run (`--api-key`, `$LINKSNAP_API_KEY`), else the session of `--profile`, else the key saved by `auth token`. (Needs the LinkSnap API that accepts Huudis tokens on `Bearer`.)
 - `auth whoami` / `auth status` refresh a stale session and show the signed-in email and workspace (they read `/auth/me`'s `user`).

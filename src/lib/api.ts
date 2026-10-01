@@ -74,7 +74,7 @@ async function send(
   method: string,
   url: URL,
   opts: ApiClientOptions,
-  init: { headers?: Record<string, string>; body?: string },
+  init: { headers?: Record<string, string>; body?: string | FormData },
 ): Promise<Response> {
   const cred = await resolveCredential(opts);
   if (!cred) throw new ApiRequestError(401, NOT_AUTHENTICATED);
@@ -129,6 +129,21 @@ export async function apiRequest<T = unknown>(
   const response = await send(method, requestUrl(path, opts), opts, {
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if (!response.ok) throw await failure(response);
+  return (await response.json()) as ApiResponse<T>;
+}
+
+/** A multipart upload (the generated commands' file routes): the FormData as the body —
+ *  fetch writes it and its Content-Type, with the boundary — and this run's credential. */
+export async function apiForm<T = unknown>(
+  method: string,
+  path: string,
+  opts: ApiClientOptions & { form: FormData; params?: Record<string, string> },
+): Promise<ApiResponse<T>> {
+  const response = await send(method, requestUrl(path, opts), opts, {
+    headers: { Accept: 'application/json' },
+    body: opts.form,
   });
   if (!response.ok) throw await failure(response);
   return (await response.json()) as ApiResponse<T>;
