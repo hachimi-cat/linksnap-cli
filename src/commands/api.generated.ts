@@ -820,6 +820,72 @@ export const API_ROUTES: Array<{ area: string; routes: Route[] }> = [
     "body": null
    },
    {
+    "name": "deliveries",
+    "method": "GET",
+    "path": "/api/v1/webhooks/deliveries",
+    "summary": "List webhook deliveries.",
+    "pathParams": [],
+    "query": [
+     {
+      "name": "cursor",
+      "kind": "string",
+      "required": false
+     },
+     {
+      "name": "limit",
+      "kind": "string",
+      "required": false
+     },
+     {
+      "name": "status",
+      "kind": "string",
+      "required": false
+     },
+     {
+      "name": "subscriptionId",
+      "kind": "string",
+      "required": false
+     },
+     {
+      "name": "type",
+      "kind": "string",
+      "required": false
+     }
+    ],
+    "body": null
+   },
+   {
+    "name": "deliveries-retry",
+    "method": "POST",
+    "path": "/api/v1/webhooks/deliveries/{id}/retry",
+    "summary": "Retry a webhook delivery.",
+    "pathParams": [
+     "id"
+    ],
+    "query": [],
+    "body": null
+   },
+   {
+    "name": "event-types",
+    "method": "GET",
+    "path": "/api/v1/webhooks/event-types",
+    "summary": "The event catalogue: every type LinkSnap sends, with what fires it — the dashboard's event picker renders from this.",
+    "pathParams": [],
+    "query": [],
+    "body": null
+   },
+   {
+    "name": "get-deliveries",
+    "method": "GET",
+    "path": "/api/v1/webhooks/deliveries/{id}",
+    "summary": "Get a webhook delivery, with every attempt made at it.",
+    "pathParams": [
+     "id"
+    ],
+    "query": [],
+    "body": null
+   },
+   {
     "name": "list",
     "method": "GET",
     "path": "/api/v1/webhooks",

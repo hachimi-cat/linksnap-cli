@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.5.0
+- `linksnap api webhooks deliveries` (`--subscription-id`, `--status`, `--type`, `--limit`, `--cursor`), `linksnap api webhooks get-deliveries <id>`, `linksnap api webhooks deliveries-retry <id>` and `linksnap api webhooks event-types`: the webhook delivery log, retry and event catalog.
+
 ## 1.4.0
 - `linksnap api qr-codes upload-logo --logo <path>`: the generated command uploads the file as `multipart/form-data` (it had no `--logo` and sent nothing), typed from its name the way `linksnap qr upload-logo` does, with this run's credential.
 
