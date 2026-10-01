@@ -293,12 +293,12 @@ describe('auth commands', () => {
   });
 
   describe('auth token', () => {
-    it('verifies the key by calling /api/v1/auth/me with Bearer header', async () => {
+    it('verifies the key by calling /api/v1/auth/me, sending it the way the server reads keys', async () => {
       mockApiSuccess({ email: 'user@test.com', plan: 'Pro' });
       await run('auth', 'token', 'lsk_live_abc123');
       expect(getCallUrl()).toContain('/api/v1/auth/me');
       expect(getCallMethod()).toBe('GET');
-      expect(getCallAuth()).toBe('Bearer lsk_live_abc123');
+      expect(getCallAuth()).toBe('ApiKey lsk_live_abc123');
     });
 
     it('outputs JSON with --json', async () => {
@@ -839,13 +839,13 @@ describe('billing commands', () => {
   });
 
   describe('billing downgrade', () => {
-    it('sends POST /api/v1/billing/downgrade with planId', async () => {
+    it('sends POST /api/v1/billing/downgrade with the plan the server reads', async () => {
       mockApiSuccess({ message: 'Downgrade scheduled', activeUntil: '2026-02-01' });
       await run('billing', 'downgrade', 'free');
       expect(getCallMethod()).toBe('POST');
       expect(getCallUrl()).toContain('/api/v1/billing/downgrade');
       const body = getCallBody() as Record<string, unknown>;
-      expect(body.planId).toBe('free');
+      expect(body.plan).toBe('free');
     });
 
     it('outputs JSON with --json', async () => {

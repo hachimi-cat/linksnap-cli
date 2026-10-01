@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { createInterface } from 'node:readline';
 import { readFileSync } from 'node:fs';
 import { basename, extname } from 'node:path';
-import { apiRequest, apiDownload, ApiRequestError } from '../lib/api.js';
+import { apiRequest, apiDownload, ApiRequestError, authorizationHeader } from '../lib/api.js';
 import { resolveApiKey, resolveApiUrl } from '../lib/config.js';
 import { formatTable, formatKeyValue, formatJson, errorOutput } from '../lib/output.js';
 
@@ -347,7 +347,7 @@ qrCommand
       const start = Date.now();
       const uploadResp = await fetch(uploadUrl, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}`, Accept: 'application/json' },
+        headers: { Authorization: authorizationHeader(apiKey), Accept: 'application/json' },
         body: form,
       });
       if (globalOpts.verbose) {

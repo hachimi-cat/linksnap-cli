@@ -42,6 +42,12 @@ export interface ApiResponse<T = unknown> {
   };
 }
 
+/** A LinkSnap API key (`lsk_live_…` / `lsk_test_…`) goes as `ApiKey <key>`, which is
+ *  what the server reads; any other token (a Huudis access token) as `Bearer <token>`. */
+export function authorizationHeader(token: string): string {
+  return token.startsWith('lsk_') ? `ApiKey ${token}` : `Bearer ${token}`;
+}
+
 export async function apiRequest<T = unknown>(
   method: string,
   path: string,
@@ -68,7 +74,7 @@ export async function apiRequest<T = unknown>(
   }
 
   const headers: Record<string, string> = {
-    Authorization: `Bearer ${apiKey}`,
+    Authorization: authorizationHeader(apiKey),
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };
@@ -128,7 +134,7 @@ export async function apiDownload(
   }
 
   const headers: Record<string, string> = {
-    Authorization: `Bearer ${apiKey}`,
+    Authorization: authorizationHeader(apiKey),
   };
 
   const start = Date.now();

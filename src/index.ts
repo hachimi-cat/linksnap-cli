@@ -14,6 +14,7 @@ import { workspaceCommand } from './commands/workspace.js';
 import { healthCommand } from './commands/health.js';
 import { qrCommand } from './commands/qr.js';
 import { domainsCommand } from './commands/domains.js';
+import { buildApiCommand } from './commands/api.generated.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -46,6 +47,8 @@ program.addCommand(workspaceCommand);
 program.addCommand(healthCommand);
 program.addCommand(qrCommand);
 program.addCommand(domainsCommand);
+// Every route of the API, generated from the spec: `linksnap api <area> <action>`
+program.addCommand(buildApiCommand());
 
 // -------------------------------------------------------
 // Top-level aliases for common commands

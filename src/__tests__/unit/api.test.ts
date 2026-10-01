@@ -73,6 +73,15 @@ describe('apiRequest', () => {
     expect(init.body).toBeUndefined();
   });
 
+  it('sends a LinkSnap API key as `ApiKey <key>`, which the server reads', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: { id: '1' } }),
+    });
+    await apiRequest('GET', 'links', { apiKey: 'lsk_live_abc' });
+    expect(mockFetch.mock.calls[0][1].headers.Authorization).toBe('ApiKey lsk_live_abc');
+  });
+
   it('sends POST with JSON body', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
